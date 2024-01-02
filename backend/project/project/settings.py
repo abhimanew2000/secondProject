@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'accounts',
     'hotels',
+    'customadmin',
 
 ]
 
@@ -152,9 +153,13 @@ AUTH_USER_MODEL='accounts.User'
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
-EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+EMAIL_HOST_USER = "abhimanew2000@gmail.com"
+EMAIL_HOST_PASSWORD = "dgjy ytuh occp jeqe"
 EMAIL_USE_TLS = True
+
+
+DEFAULT_FROM_EMAIL = 'abhimanew2000@gmail.com'
+SERVER_EMAIL = 'abhimanew2000@gmail.com'
 
 
 
@@ -179,9 +184,15 @@ SIMPLE_JWT = {
     
 }
 
-CORS_ALLOWED_ALL_ORIGINS = [
-    True
-    # "http://localhost:3000",
-    # "http://127.0.0.1:3000",
-    # "http://localhost:5173",
-]
+# CORS_ALLOWED_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
+
+
+# CORS_ALLOWED_ORIGINS = [
+
+
+# ]
+
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+MEDIA_URL = '/media/'
