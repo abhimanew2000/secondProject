@@ -30,3 +30,13 @@ class AutocompleteCityView(View):
 
         print('Filtered Cities:', cities)
         return JsonResponse(list(cities), safe=False)
+    
+# views.py
+
+def get_hotels(request):
+    print('hefvsd')
+    city_name = request.GET.get('city', '')
+    hotels =list( Hotel.objects.filter(city__iexact=city_name).values())
+    print(hotels,'hotels')
+
+    return JsonResponse({'city_name': city_name, 'hotels': hotels})

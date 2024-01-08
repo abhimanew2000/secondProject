@@ -11,6 +11,8 @@ class Hotel(models.Model):
     availability = models.BooleanField(default=True)
     amenities = ArrayField(models.CharField(max_length=50), blank=True, default=list)
     ratings = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    price = models.IntegerField()  
+
 
     def __str__(self):
         return self.name
