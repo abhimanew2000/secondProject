@@ -12,12 +12,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser
 from hotels.models import Hotel
 from rest_framework.decorators import api_view, permission_classes
-from hotels.serializers import HotelSerializer
+from hotels.serializers import HotelSerializer,HotelsSerializer
 
 from rest_framework.generics import ListCreateAPIView
 
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.views import View
+from hotels .models import Room, RoomType
+from hotels.serializers import RoomSerializer, RoomTypeSerializer
 
 # Create your views here.
 
@@ -58,7 +60,7 @@ def admin_block_user(request, pk):
 @api_view(['PUT'])
 def admin_unblock_user(request, pk):
         user = get_object_or_404(User, id=pk)
-        user.is_active = True  # Set is_active to True to unblock the user
+        user.is_active = True  
         user.save()
         return Response(status=status.HTTP_200_OK)
 
@@ -89,30 +91,63 @@ class ToggleHotelAvailabilityView(APIView):
 
 class HotelUpdateView(RetrieveUpdateAPIView):
     queryset = Hotel.objects.all()
-    serializer_class = HotelSerializer
+    serializer_class = HotelsSerializer
     lookup_field = 'pk'  # Add this line
  
-    
-    def get_object(self):
-        hotel_id = self.kwargs.get('pk')
-        return get_object_or_404(Hotel, id=hotel_id)
-    
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-    
+    def put(self, request,*args, **kwargs):
+        try:
+            instance = self.get_object()  # Use the built-in get_object method
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.update(request, *args, **kwargs)
+            return Response({'success': 'Hotel updated successfully'}, status=status.HTTP_200_OK)
+        except Http404:
+            return Response({'error': 'Hotel not found'}, status=status.HTTP_404_NOT_FOUND)
 
-def get_hotel_details(request, hotel_id):
-    hotel = get_object_or_404(Hotel, id=hotel_id)
-    data = {
-        'id': hotel.id,
-        'name': hotel.name,
-        'description': hotel.description,
-        'city': hotel.city,
-        'address': hotel.address,
-        'image_url': hotel.image.url if hotel.image else None,
-        'availability': hotel.availability,
-        'amenities': hotel.amenities,
-        'ratings': str(hotel.ratings),
-        'price': hotel.price,
-    }
-    return JsonResponse(data)
+    # def get_object(self,id):
+    #     hotel_id = self.kwargs.get('pk')
+    #     return get_object_or_404(Hotel, id=hotel_id)
+    
+    # def put(self, request, *args, **kwargs):
+    #     try:
+    #         self.update(request, *args, **kwargs)
+    #         return Response({'success': 'successd'}, status=status.HTTP_200_OK)
+    #     except:
+    #         return Response({'error': 'Hotel not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+from django.contrib.auth import logout
+
+class AdminLogoutView(APIView):
+    def post(self, request, format=None):
+        # Check if the user is a superuser
+        if request.user.is_authenticated and request.user.is_superuser:
+            logout(request)
+            return Response({"msg": "Admin Logout Success"}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"errors": {"non_field_errors": ["User is not a superuser or is not authenticated"]}},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        
+
+
+
+
+class RoomListView(ListCreateAPIView):
+    queryset = Room.objects.all()
+    serializer_class = RoomSerializer
+
+class RoomDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Room.objects.all()
+    serializer_class = RoomSerializer
+
+class RoomTypeListView(ListCreateAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
+
+class RoomTypeDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
