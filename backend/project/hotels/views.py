@@ -10,19 +10,21 @@ from django.shortcuts import get_object_or_404
 
 from django.views import View
 
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView,ListAPIView
 from .models import Room, RoomType
-from .serializers import RoomSerializer, RoomTypeSerializer
+from .serializers import RoomSerializer, RoomTypeSerializer,HotelsSerializer
 
 # hotels/views.py
 
 
 class HotelList(generics.ListCreateAPIView):
     queryset = Hotel.objects.all()
-    serializer_class = HotelSerializer
+    serializer_class = HotelsSerializer
 
 
-
+class RoomTypeList(ListAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
 
 class AutocompleteCityView(View):
     def get(self, request, *args, **kwargs):

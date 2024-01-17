@@ -17,6 +17,8 @@ class Hotel(models.Model):
     amenities = ArrayField(models.CharField(max_length=50), blank=True, default=list)
     ratings = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     price = models.IntegerField()  
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
 
     def __str__(self):
         return self.name

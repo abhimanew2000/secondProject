@@ -28,7 +28,7 @@ class RoomSerializer(serializers.ModelSerializer):
 
 class HotelsSerializer(serializers.ModelSerializer):
     rooms = RoomSerializer(many=True, read_only=True)
-    room_types = RoomTypeSerializer(many=True, read_only=True)
+    room_types = RoomTypeSerializer(many=True, read_only=True,)
     class Meta:
         model = Hotel
         fields = '__all__'

@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework import status
-from rest_framework.generics import ListAPIView,RetrieveUpdateDestroyAPIView,RetrieveUpdateAPIView
+from rest_framework.generics import ListAPIView,RetrieveUpdateDestroyAPIView,RetrieveUpdateAPIView,RetrieveAPIView
 from accounts.models import User
 from .serializers import UserSerializers
 from rest_framework.permissions import IsAuthenticated
@@ -104,19 +104,6 @@ class HotelUpdateView(RetrieveUpdateAPIView):
         except Http404:
             return Response({'error': 'Hotel not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # def get_object(self,id):
-    #     hotel_id = self.kwargs.get('pk')
-    #     return get_object_or_404(Hotel, id=hotel_id)
-    
-    # def put(self, request, *args, **kwargs):
-    #     try:
-    #         self.update(request, *args, **kwargs)
-    #         return Response({'success': 'successd'}, status=status.HTTP_200_OK)
-    #     except:
-    #         return Response({'error': 'Hotel not found'}, status=status.HTTP_404_NOT_FOUND)
-
-
-
 
 from django.contrib.auth import logout
 
@@ -151,3 +138,25 @@ class RoomTypeListView(ListCreateAPIView):
 class RoomTypeDetailView(RetrieveUpdateDestroyAPIView):
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
+
+
+
+class HotelDetailView(RetrieveAPIView):
+    queryset = Hotel.objects.all()
+    serializer_class = HotelsSerializer
+
+
+def hotel_room_fetch(request, hotel_id):
+    data = {}
+    rooms = Room.objects.filter(hotel=hotel_id)
+    room_data = []
+
+    for room in rooms:
+        room_data.append({
+            'room_type': room.room_type.name,
+            'price_per_night': room.price_per_night,
+            # Add other room fields as needed
+        })
+
+    data['rooms'] = room_data
+    return JsonResponse(data)
