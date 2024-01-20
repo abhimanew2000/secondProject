@@ -20,7 +20,8 @@ from django.http import Http404, JsonResponse
 from django.views import View
 from hotels .models import Room, RoomType
 from hotels.serializers import RoomSerializer, RoomTypeSerializer
-
+from Booking.models import HotelBooking
+from Booking.serializers import HotelBookingSerializer
 # Create your views here.
 
 class AdminLoginView(APIView):
@@ -160,3 +161,10 @@ def hotel_room_fetch(request, hotel_id):
 
     data['rooms'] = room_data
     return JsonResponse(data)
+
+
+class HotelBookingListView(View):
+    def get(self, request, *args, **kwargs):
+        bookings = HotelBooking.objects.all()
+        serialized_bookings = HotelBookingSerializer(bookings, many=True).data
+        return JsonResponse({'bookings': serialized_bookings}, safe=False)
