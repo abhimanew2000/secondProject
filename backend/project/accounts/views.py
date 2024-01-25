@@ -15,6 +15,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 
 from django.contrib.auth.views import LogoutView
+from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
+from django.contrib.auth import logout
 
 
 def get_tokens_for_user(user):
@@ -43,7 +45,7 @@ class UserRegistrationView(APIView):
 
 class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
-
+    permission_classes=[AllowAny]
     def post(self, request, format=None):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -66,8 +68,16 @@ class UserLoginView(APIView):
                 )
 
 
-class UserLogoutView(LogoutView):
-    pass
+class UserLogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        # Assuming you are using Django's built-in logout method
+
+        # Perform user logout
+        logout(request)
+
+        return Response({"msg": "Logout successful"}, status=status.HTTP_200_OK)
 
 
 class UserProfileView(APIView):
@@ -96,6 +106,8 @@ class UserChangePasswordView(APIView):
 
 class SendPasswordResetEmailView(APIView):
     renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+
 
     def post(self, request, format=None):
         serializer = SendPasswordResetEmailSerializer(data=request.data)
@@ -110,6 +122,8 @@ class SendPasswordResetEmailView(APIView):
 
 class UserPasswordResetView(APIView):
     renderer_classes=[UserRenderer]
+    permission_classes = [IsAuthenticated]
+
     def post(self,request,uid,token,format=None):
         serializer=UserPassworddResetSerializer(data=request.data,context={'uid':uid,'token':token})
         if serializer.is_valid(raise_exception=True):

@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework import status
@@ -9,10 +10,11 @@ from .serializers import UserSerializers
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
 from hotels.models import Hotel
 from rest_framework.decorators import api_view, permission_classes
 from hotels.serializers import HotelSerializer,HotelsSerializer
+from rest_framework.generics import DestroyAPIView
 
 from rest_framework.generics import ListCreateAPIView
 
@@ -22,9 +24,11 @@ from hotels .models import Room, RoomType
 from hotels.serializers import RoomSerializer, RoomTypeSerializer
 from Booking.models import HotelBooking
 from Booking.serializers import HotelBookingSerializer
+from accounts.views import get_tokens_for_user
 # Create your views here.
 
 class AdminLoginView(APIView):
+    permission_classes=[AllowAny]
     def post(self, request, format=None):
         email = request.data.get("email")
         print('email',email)
@@ -33,15 +37,21 @@ class AdminLoginView(APIView):
         user = authenticate(email=email, password=password)
 
         if user and user.is_staff:
-            return Response({"msg": "Admin Login Success", "user_email": user.email}, status=status.HTTP_200_OK)
+            token = get_tokens_for_user(user)
+            return Response(
+                    {"token": token, "msg": "Admin Login Success", "user_email": user.email},
+                    status=status.HTTP_200_OK
+                )
         else:
             return Response(
-                {"errors": {"non_field_errors": ["Invalid admin credentials"]}},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+                    {"errors": {"non_field_errors": ["Invalid admin credentials"]}},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
 
 class UserListView(ListAPIView):
+    permission_classes=[IsAdminUser]
+
     queryset = User.objects.all()
     serializer_class = UserSerializers
     # permission_classes =[IsAuthenticated]
@@ -66,6 +76,7 @@ def admin_unblock_user(request, pk):
         return Response(status=status.HTTP_200_OK)
 
 class HotelListView(ListCreateAPIView):
+    permission_classes = [IsAdminUser]
     queryset = Hotel.objects.all()
     serializer_class = HotelSerializer 
 
@@ -76,7 +87,9 @@ class HotelDeleteView(RetrieveUpdateDestroyAPIView):
 
 
 class ToggleHotelAvailabilityView(APIView):
+    permission_classes=[IsAdminUser]
     def patch(self, request, id):
+
         try:
             hotel = Hotel.objects.get(id=id)
             serializer = HotelSerializer(hotel, data={'availability': not hotel.availability}, partial=True)
@@ -91,6 +104,9 @@ class ToggleHotelAvailabilityView(APIView):
 
 
 class HotelUpdateView(RetrieveUpdateAPIView):
+    permission_classes=[IsAdminUser]
+    print("hellooo")
+
     queryset = Hotel.objects.all()
     serializer_class = HotelsSerializer
     lookup_field = 'pk'  # Add this line
@@ -125,29 +141,36 @@ class AdminLogoutView(APIView):
 
 
 class RoomListView(ListCreateAPIView):
+    permission_classes = [IsAdminUser]
+
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
 
 class RoomDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsAdminUser]
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
 
 class RoomTypeListView(ListCreateAPIView):
+    permission_classes=[IsAdminUser]
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
 
 class RoomTypeDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsAdminUser]
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
 
 
 
 class HotelDetailView(RetrieveAPIView):
+    permission_classes=[IsAdminUser]
     queryset = Hotel.objects.all()
     serializer_class = HotelsSerializer
 
 
 def hotel_room_fetch(request, hotel_id):
+    permission_classes=[IsAdminUser]
     data = {}
     rooms = Room.objects.filter(hotel=hotel_id)
     room_data = []
@@ -164,7 +187,33 @@ def hotel_room_fetch(request, hotel_id):
 
 
 class HotelBookingListView(View):
+    permission_classes=[IsAdminUser]
     def get(self, request, *args, **kwargs):
         bookings = HotelBooking.objects.all()
         serialized_bookings = HotelBookingSerializer(bookings, many=True).data
         return JsonResponse({'bookings': serialized_bookings}, safe=False)
+    
+
+class CancelBookingView(generics.UpdateAPIView):
+    permission_classes=[IsAdminUser]
+    queryset = HotelBooking.objects.all()
+    serializer_class = HotelBookingSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_cancelled = True
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class RoomTypeDeleteView(DestroyAPIView):
+    permission_classes=[IsAdminUser]
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
+    lookup_field = 'id'  # Specify the correct lookup field
+
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({'success': 'RoomType deleted successfully'}, status=status.HTTP_204_NO_CONTENT)

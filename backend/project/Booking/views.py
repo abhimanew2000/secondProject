@@ -10,21 +10,32 @@ from.serializers import HotelBookingSerializer
 from hotels.models import Hotel
 from accounts.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+
+
+
+
+
+
 
 @csrf_exempt
 def hotel_booking(request):
+    permission_classes=[IsAuthenticated]
     print(request.method)  
-
     if request.method == 'POST':
         print("hii")
         try:
             data = json.loads(request.body.decode('utf-8'))
             total_price = data.get('totalPrice')
-            room_type = data.get('roomType')  # Include roomType in the request
+            room_type = data.get('roomType')  
             hotelId = data.get('hotelId')  # Include roomType in the request
 
-            print(room_type,"roomtype")
-            print(hotelId,"hotelid")
+            print("Received Room Type:", room_type)
+            print("Received Total Price:", total_price)
 
             print(total_price, "totalprice")
 
@@ -62,6 +73,7 @@ def hotel_booking(request):
 
 @csrf_exempt
 def confirm_booking(request):
+    permission_classes=[IsAuthenticated]
     print("entered")
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
@@ -70,7 +82,7 @@ def confirm_booking(request):
         print(razorpay_signature, 'signature')
         razorpay_payment_id = data.get('razorpayPaymentId')
         print(razorpay_payment_id, 'payment_id')    
-        user_name = data.get('user', '')
+        user_name = data.get('email', '')
         try:
             user = User.objects.get(email=user_name)
             print(user,'userrrrr')
@@ -111,11 +123,6 @@ def confirm_booking(request):
                 'razorpay_signature': razorpay_signature
             }
             print(params_dict,'dict')
-
-            # client.utility.verify_payment_signature(params_dict)
-
-            # Payment verification successful, create a booking entry
-            # with transaction.atomic():
             booking =HotelBooking.objects.create(
                     user=user,
                     hotel=hotel,
@@ -141,12 +148,29 @@ def confirm_booking(request):
     return JsonResponse({'status': 'failure', 'reason': 'Invalid request method'})
 
 
-def cancel_booking(request, booking_id):
-    print('enteredt to funct')
-    try:
-        booking = HotelBooking.objects.get(id=booking_id)
-        booking.is_cancelled = True
-        booking.save()
-        return JsonResponse({'message': 'Booking cancelled successfully'}, status=200)
-    except HotelBooking.DoesNotExist:
-        return JsonResponse({'error': 'Booking not found'}, status=404)
+
+
+
+# ------------------------------------------------------------------------
+class UserBookingListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = HotelBookingSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return HotelBooking.objects.filter(user=user).select_related('hotel')
+
+
+
+# ------------------------------------
+class UserCancelBookingView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = HotelBooking.objects.all()
+    serializer_class = HotelBookingSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_cancelled = True
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)

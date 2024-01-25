@@ -13,13 +13,16 @@ from django.views import View
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView,ListAPIView
 from .models import Room, RoomType
 from .serializers import RoomSerializer, RoomTypeSerializer,HotelsSerializer
+from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
 
 # hotels/views.py
 
 
 class HotelList(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
     queryset = Hotel.objects.all()
     serializer_class = HotelsSerializer
+    
 
 
 class RoomTypeList(ListAPIView):

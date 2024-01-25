@@ -12,7 +12,9 @@ from .views import (
     RoomTypeDetailView,
     RoomTypeListView,
     hotel_room_fetch,
-    HotelBookingListView
+    HotelBookingListView,
+    CancelBookingView,
+    RoomTypeDeleteView,
 )
 from . import views
 
@@ -41,6 +43,8 @@ urlpatterns = [
     path("room-types/", RoomTypeListView.as_view(), name="room-type-list"),
     path("room-types/<int:pk>/", RoomTypeDetailView.as_view(), name="room-type-detail"),
     path('about/<int:hotel_id>/', views.hotel_room_fetch, name="hotel-room-fetch"),
-    path('hotel-bookinglist/',HotelBookingListView.as_view(),name='hotel-bookinglist')
+    path('hotel-bookinglist/',HotelBookingListView.as_view(),name='hotel-bookinglist'),
+    path('cancel-booking/<int:pk>/',CancelBookingView.as_view(), name='cancel-booking'),
+    path('hotel/<int:hotel_id>/room-types/<int:id>/delete/', RoomTypeDeleteView.as_view(), name='delete-room-type'),
 
 ]
