@@ -72,10 +72,11 @@ class UserChangePasswordSerializer(serializers.ModelSerializer):
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
 
-    class Meta:
-        fields = ["email"]
+    # class Meta:
+    #     fields = ["email"]
 
     def validate(self, attrs):
+        print('entered')
         email=attrs.get('email')
         if User.objects.filter(email=email).exists():
             user=User.objects.get(email=email)
@@ -83,7 +84,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             print('uid is UID',uid)
             token=PasswordResetTokenGenerator().make_token(user)
             print('password reset token',token)
-            link = f'http://localhost:5173/reset-password/'
+            link = f'http://localhost:5173/reset-password/{uid}/{token}/'
             escaped_link = escape(link)
             print('password Reset Link',link)
             body = f'Click the following link to reset your password: <a href="{link}">Reset Password</a>'
@@ -106,10 +107,6 @@ class UserPassworddResetSerializer(serializers.Serializer):
     password2 = serializers.CharField(
         max_length=255, style={"input_type": "password"}, write_only=True
     )
-
-    class Meta:
-        model = User
-        fields = ["password", "password2"]
 
     def validate(self, attrs):
         try:

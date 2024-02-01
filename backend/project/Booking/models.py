@@ -23,4 +23,4 @@ class HotelBooking(models.Model):
 
 
     def __str__(self):
-        return f"{self.user.username} - {self.hotel.name} - {self.room_type}"
+        return f"{self.user.name} - {self.hotel.name} - {self.room_type}"

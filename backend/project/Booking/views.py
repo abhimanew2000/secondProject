@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import F, Value, BooleanField
 
 
 
@@ -158,7 +159,7 @@ class UserBookingListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return HotelBooking.objects.filter(user=user).select_related('hotel')
+        return HotelBooking.objects.filter(user=user).select_related('hotel').order_by('is_cancelled')
 
 
 

@@ -7,14 +7,16 @@ from django.views.decorators.http import require_GET
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 from django.views import View
+from rest_framework.views import APIView
 
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView,ListAPIView
-from .models import Room, RoomType
-from .serializers import RoomSerializer, RoomTypeSerializer,HotelsSerializer
+from .models import Room, RoomType,Wishlist
+from .serializers import RoomSerializer, RoomTypeSerializer,HotelsSerializer,WishlistSerializer
 from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
-
+from rest_framework import status
 # hotels/views.py
 
 
@@ -86,3 +88,95 @@ def get_hotel_images(request, hotel_id):
     }
 
     return JsonResponse(data)
+
+class WishlistView(APIView):
+    print('entered')
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        if wishlist is not None:
+            serializer = WishlistSerializer(wishlist)
+            return Response(serializer.data)
+        else:
+            return Response({'hotels': []}, status=status.HTTP_200_OK)
+    def post(self, request):
+        if request.user.is_authenticated:
+            wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+            hotel_id = request.data.get('hotelId')
+            print('Received hotel_id:', hotel_id)
+
+            if wishlist.hotels.filter(id=hotel_id).exists():
+                return Response({'error': 'Hotel is already in the wishlist.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                wishlist.hotels.add(hotel_id)
+                serializer = WishlistSerializer(wishlist)
+                print(serializer, "SERIALIZER")
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'User is not authenticated.'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_wishlist(request):
+    print('enterred')
+    try:
+        hotel_id = int(request.data.get('hotel_id'))
+        print(hotel_id,"HOTELID")
+        hotel = Hotel.objects.get(id=hotel_id)
+        
+        # Get or create user's wishlist
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        wishlist.hotels.add(hotel)
+
+        return JsonResponse({'success': True, 'message': 'Hotel added to wishlist.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_from_wishlist(request):
+    try:
+        hotel_id = int(request.data.get('hotel_id'))
+        hotel = Hotel.objects.get(id=hotel_id)
+
+        # Get user's wishlist and remove the hotel
+        wishlist = Wishlist.objects.get(user=request.user)
+        wishlist.hotels.remove(hotel)
+
+        return JsonResponse({'success': True, 'message': 'Hotel removed from wishlist.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_wishlist(request):
+    try:
+        wishlist = Wishlist.objects.get(user=request.user)
+        wishlist_hotels = wishlist.hotels.all()
+
+        # Serialize the hotels as needed
+        serialized_hotels = [
+            {
+                'id': hotel.id,
+                'name': hotel.name,
+                'description': hotel.description,
+                'address': hotel.address,
+                'image': hotel.image.url,  # Assuming ImageField in Hotel model
+                # Add more fields as needed
+            }
+            for hotel in wishlist_hotels
+        ]
+
+        return Response({'hotels': serialized_hotels})
+    except Wishlist.DoesNotExist:
+        return Response({'hotels': []})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+

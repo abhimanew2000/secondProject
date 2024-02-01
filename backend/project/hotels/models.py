@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
-
+from accounts.models import User
 # Create your models here.
 
 class HotelImage(models.Model):
@@ -19,6 +19,16 @@ class Hotel(models.Model):
     price = models.IntegerField()  
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+
+
+    def calculate_average_rating(self):
+        feedbacks = Feedback.objects.filter(hotel=self)
+        if feedbacks.exists():
+            total_ratings = sum(feedback.ratings for feedback in feedbacks)
+            average_rating = total_ratings / feedbacks.count()
+            return round(average_rating, 2)
+        else:
+            return 0.0
 
     def __str__(self):
         return self.name
@@ -46,3 +56,21 @@ class RoomType(models.Model):
 
     def __str__(self):
         return f"{self.hotel.name} - {self.name}"
+
+
+class Feedback(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE) 
+    description = models.TextField(blank=True,null=True,max_length =255)
+    ratings = models.DecimalField(max_digits=5, decimal_places=2, default=0.0,blank=True,null=True)
+
+    def __str__(self):
+        return f"{self.user.name} - {self.hotel.name}"
+    
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    hotels = models.ManyToManyField('Hotel')
+
+    def __str__(self):
+        return f'Wishlist for {self.user.name}'

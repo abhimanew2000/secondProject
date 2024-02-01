@@ -46,12 +46,15 @@ INSTALLED_APPS = [
     'hotels',
     'customadmin',
     'Booking',
+    'social_django',
+    # 'rest_framework_simplejwt.token_blacklist',
 
 
 ]
 
 MIDDLEWARE = [
 
+    'social_django.middleware.SocialAuthExceptionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -76,6 +79,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect'
             ],
         },
     },
@@ -145,6 +150,7 @@ USE_I18N = True
 USE_TZ = True
 
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
@@ -170,6 +176,10 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'abhimanew2000@gmail.com'
 SERVER_EMAIL = 'abhimanew2000@gmail.com'
 
+AUTHENTICATION_BACKENDS=(
+    'social_core.backends.google.GoogleOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 
 SIMPLE_JWT = {
