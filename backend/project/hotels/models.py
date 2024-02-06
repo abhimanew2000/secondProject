@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from accounts.models import User
+
 # Create your models here.
 
 class HotelImage(models.Model):
@@ -53,6 +54,9 @@ class RoomType(models.Model):
     description = models.TextField()
     image = models.ImageField(upload_to='room_type_images/', null=True, blank=True)
     count = models.IntegerField()
+    dates = ArrayField(models.DateField(), blank=True, null=True)
+
+
 
     def __str__(self):
         return f"{self.hotel.name} - {self.name}"

@@ -14,6 +14,8 @@ from pathlib import Path
 from datetime import timedelta
 from django.conf import settings
 import os
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,6 +35,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'social_django',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,7 +49,6 @@ INSTALLED_APPS = [
     'hotels',
     'customadmin',
     'Booking',
-    'social_django',
     # 'rest_framework_simplejwt.token_blacklist',
 
 
@@ -79,6 +81,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # 'social_django.context_processors.social_auth_by_type_backends',
+
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect'
             ],
@@ -95,11 +99,11 @@ WSGI_APPLICATION = 'project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'second_project',        # Your database name
-        'USER': 'myuser',                # Your database user
-        'PASSWORD': 'password',          # Your database password
-        'HOST': 'localhost',             # Set to the appropriate host
-        'PORT': '5432',                  # Set to the appropriate port
+        'NAME': 'second_project',        
+        'USER': 'myuser',                
+        'PASSWORD': 'password',          
+        'HOST': 'localhost',             
+        'PORT': '5432',                 
     }
 }
 
@@ -202,6 +206,12 @@ SIMPLE_JWT = {
 
     
 }
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL='home'
+LOGOUT_URL = 'logout'
+LOGOT_REDIRECT_URL = 'login'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '426249040470-q0nniqiqvbstkchn5lbupvp4alg3ual3.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
 
 # CORS_ALLOWED_ALL_ORIGINS = True
 CORS_ORIGIN_ALLOW_ALL = True

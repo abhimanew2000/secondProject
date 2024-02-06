@@ -17,6 +17,7 @@ from hotels.serializers import HotelSerializer,HotelsSerializer
 from rest_framework.generics import DestroyAPIView
 
 from rest_framework.generics import ListCreateAPIView
+import json
 
 from django.http import Http404, JsonResponse
 from django.views import View
@@ -217,3 +218,39 @@ class RoomTypeDeleteView(DestroyAPIView):
         instance = self.get_object()
         instance.delete()
         return Response({'success': 'RoomType deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
+
+
+class SingleHotelDetailView(generics.RetrieveAPIView):
+    queryset = Hotel.objects.all()
+    serializer_class = HotelsSerializer
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return self.retrieve(request, *args, **kwargs)
+    
+class UpdateNotAvailableDates(APIView):
+    permission_classes=[IsAdminUser]
+    def post(self, request, hotel_id):
+        print("HII")
+        try:
+            # Get the selected dates from the request data
+            selected_dates = request.data.get('dates', [])
+
+            # Retrieve the corresponding room types for the given hotel
+            room_types = RoomType.objects.filter(hotel_id=hotel_id)
+
+            # Update the not available dates for each room type
+            for room_type in room_types:
+                room_type.dates.extend(selected_dates)
+                room_type.save()
+
+            return Response({'message': 'Selected dates updated successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

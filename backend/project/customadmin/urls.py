@@ -15,6 +15,8 @@ from .views import (
     HotelBookingListView,
     CancelBookingView,
     RoomTypeDeleteView,
+    SingleHotelDetailView,
+    UpdateNotAvailableDates
 )
 from . import views
 
@@ -46,5 +48,8 @@ urlpatterns = [
     path('hotel-bookinglist/',HotelBookingListView.as_view(),name='hotel-bookinglist'),
     path('cancel-booking/<int:pk>/',CancelBookingView.as_view(), name='cancel-booking'),
     path('hotel/<int:hotel_id>/room-types/<int:id>/delete/', RoomTypeDeleteView.as_view(), name='delete-room-type'),
+    path('single-hotel-detail/<int:pk>/', SingleHotelDetailView.as_view(), name='single-hotel-detail'),
+    path('update-not-available-dates/<int:hotel_id>/', UpdateNotAvailableDates.as_view(), name='update_not_available_dates'),
+
 
 ]
