@@ -3,7 +3,7 @@ from hotels.models import Hotel
 from accounts.models import User
 class HotelBooking(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE)  # Assuming you have a Hotel model
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE)  
     room_type = models.CharField(max_length=255)
     price_per_night = models.DecimalField(max_digits=8, decimal_places=2,blank=True,null=True)
     total_price = models.DecimalField(max_digits=8, decimal_places=2)

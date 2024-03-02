@@ -35,6 +35,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'social_django',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -49,10 +50,15 @@ INSTALLED_APPS = [
     'hotels',
     'customadmin',
     'Booking',
-    # 'rest_framework_simplejwt.token_blacklist',
+    'channels',
+    'notification',
+    'chat',
 
 
 ]
+
+
+
 
 MIDDLEWARE = [
 
@@ -91,6 +97,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'project.wsgi.application'
+ASGI_APPLICATION = 'project.asgi.application'
 
 
 # Database
@@ -213,7 +220,6 @@ LOGOT_REDIRECT_URL = 'login'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '426249040470-q0nniqiqvbstkchn5lbupvp4alg3ual3.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
 
-# CORS_ALLOWED_ALL_ORIGINS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -221,11 +227,24 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
 
-"http://localhost:5173",
+'http://localhost:5173',
 'https://laptop-su3kol9o',
+
+]
+
+
+CHANNELS_WS_ALLOWED_ORIGIN = [
+    "http://localhost:5173", 
 
 ]
 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 MEDIA_URL = '/media/'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  
+    },
+}
+

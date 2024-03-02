@@ -7,7 +7,8 @@ from accounts.serializers import (
     UserProfileSerializer,
     UserChangePasswordSerializer,
     SendPasswordResetEmailSerializer,
-    UserPassworddResetSerializer
+    UserPassworddResetSerializer,
+    ChatsMessageSerializer,
 )
 from rest_framework.decorators import api_view, permission_classes
 
@@ -17,14 +18,18 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 
 from django.contrib.auth.views import LogoutView
-from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from django.contrib.auth import logout
 from .serializers import GoogleLoginSerializer
 from django.contrib.auth import authenticate, login
-from accounts.models import User
+from accounts.models import User, Chats
 from django.contrib.auth import get_user_model
 
+from rest_framework.generics import ListAPIView
+from rest_framework import generics
 
+from django.db.models import Subquery, OuterRef, Q
+from .models import Profile
 
 
 def get_tokens_for_user(user):
@@ -35,9 +40,9 @@ def get_tokens_for_user(user):
         "access": str(refresh.access_token),
     }
 
-class UserRegistrationView(APIView):
-    # renderer_classes = [UserRenderer]
 
+class UserRegistrationView(APIView):
+    permission_classes=[AllowAny]
     def post(self, request, format=None):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -50,42 +55,36 @@ class UserRegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def register_user_with_google(request):
     if "google_oauth" in request.data:
         google_data = request.data["google_oauth"]
 
-        serializer = UserRegistrationSerializer(data={
-            'email': google_data.get("email"),
-            'name': google_data.get("name"),
-            'tc': True,  # You may need to adjust this based on your user model
-            'password': 'some_random_password',  # Provide a default value
-            'password2': 'some_random_password',
-            # Add other relevant fields from Google data
-        })
+        serializer = UserRegistrationSerializer(
+            data={
+                "email": google_data.get("email"),
+                "name": google_data.get("name"),
+                "tc": True,
+                "password": "some_random_password",
+                "password2": "some_random_password",
+            }
+        )
 
         if serializer.is_valid(raise_exception=False):
             serializer.save()
             return Response({"msg": "Registration successful"})
         else:
-            print(serializer.errors)  # Print the serializer errors for debugging
+            print(serializer.errors)
             return Response(serializer.errors, status=400)
 
     return Response({"msg": "Invalid request data"}, status=400)
 
 
-
-
-
-
-
-
-
-
 class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
-    permission_classes=[AllowAny]
+    permission_classes = [AllowAny]
+
     def post(self, request, format=None):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -95,7 +94,13 @@ class UserLoginView(APIView):
             if user:
                 token = get_tokens_for_user(user)
                 return Response(
-                    {"token": token, "msg": "Login Success","user_name":user.name,"email": user.email,}, status=status.HTTP_200_OK
+                    {
+                        "token": token,
+                        "msg": "Login Success",
+                        "user_name": user.name,
+                        "email": user.email,
+                    },
+                    status=status.HTTP_200_OK,
                 )
             else:
                 return Response(
@@ -108,69 +113,58 @@ class UserLoginView(APIView):
                 )
 
 
-
-# @api_view(['GET'])
-# @permission_classes([AllowAny])
-# def check_user_registration(request):
-#     email = request.GET.get('email')
-
-#     # Perform a check in your database to see if the user with this email is registered
-#     is_registered = User.objects.filter(email=email).exists()
-
-#     return Response({'is_registered': is_registered})
-
-
-
-
-
-
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def google_login(request):
-    print('enterrrred')
+    print("enterrrred")
     try:
-        # Extract the Google data from the request
         google_data = request.data.get("google_oauth")
-        print(google_data,"doodle")
+        print(google_data, "doodle")
 
-        # Check if the user is already registered
         user = User.objects.filter(email=google_data.get("email")).first()
-        print(user,"userrrrrrrr")
+        print(user, "userrrrrrrr")
 
         if user:
-            # User is already registered, perform login
-            serializer = UserLoginSerializer(data={"email": google_data.get("email"), "password": "some_random_password"})
+            serializer = UserLoginSerializer(
+                data={
+                    "email": google_data.get("email"),
+                    "password": "some_random_password",
+                }
+            )
             serializer.is_valid(raise_exception=True)
-            user = authenticate(email=google_data.get("email"), password="some_random_password")
+            user = authenticate(
+                email=google_data.get("email"), password="some_random_password"
+            )
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
 
             return Response(
-                {"token": {"access": access_token}, "msg": "Login Success", "user_name": user.name, "email": user.email},
-                status=status.HTTP_200_OK
+                {
+                    "token": {"access": access_token},
+                    "msg": "Login Success",
+                    "user_name": user.name,
+                    "email": user.email,
+                },
+                status=status.HTTP_200_OK,
             )
         else:
-            # User is not registered, return an error
-            return Response({"msg": "User not registered"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"msg": "User not registered"}, status=status.HTTP_404_NOT_FOUND
+            )
     except Exception as e:
-        return Response({"msg": "Error during Google login", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
+        return Response(
+            {"msg": "Error during Google login", "error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        # Assuming you are using Django's built-in logout method
-
-        # Perform user logout
         logout(request)
 
         return Response({"msg": "Logout successful"}, status=status.HTTP_200_OK)
-
 
 
 class UserProfileView(APIView):
@@ -201,7 +195,6 @@ class SendPasswordResetEmailView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
 
-
     def post(self, request, format=None):
         serializer = SendPasswordResetEmailSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -210,20 +203,96 @@ class SendPasswordResetEmailView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 
 class UserPasswordResetView(APIView):
-    renderer_classes=[UserRenderer]
+    renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
 
-    def post(self,request,uid,token,format=None):
-        serializer=UserPassworddResetSerializer(data=request.data,context={'uid':uid,'token':token})
+    def post(self, request, uid, token, format=None):
+        serializer = UserPassworddResetSerializer(
+            data=request.data, context={"uid": uid, "token": token}
+        )
         if serializer.is_valid(raise_exception=True):
             return Response(
                 {"msg": "password Reset Successfully"},
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
+class MyInbox(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ChatsMessageSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+
+        messages = Chats.objects.filter(
+            id__in=Subquery(
+                User.objects.filter(
+                    Q(sender__receiver=user_id) | Q(receiver__sender=user_id)
+                )
+                .distinct()
+                .annotate(
+                    last_msg=Subquery(
+                        Chats.objects.filter(
+                            Q(sender=OuterRef("id"), receiver=user_id)
+                            | Q(receiver=OuterRef("id"), sender=user_id)
+                        )
+                        .order_by("-id")[:1]
+                        .values_list("id", flat=True)
+                    )
+                )
+                .values_list("last_msg", flat=True)
+                .order_by("-id")
+            )
+        ).order_by("-id")
+
+        return messages
+
+
+class GetMessages(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ChatsMessageSerializer
+
+    def get_queryset(self):
+        sender_id = self.kwargs["sender_id"]
+        receiver_id = self.kwargs["receiver_id"]
+
+        messages = Chats.objects.filter(
+            sender__in=[sender_id, receiver_id], receiver__in=[sender_id, receiver_id]
+        )
+        return messages
+
+
+class SendMessage(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ChatsMessageSerializer
+
+
+class ProfileDetail(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserProfileSerializer
+    queryser = Profile.objects.all()
+
+
+class SearchUser(generics.ListAPIView):
+    serializer_class = UserProfileSerializer
+    queryset = Profile.objects.all()
+    permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        username = self.kwargs["username"]
+        users = Profile.objects.filter(
+            Q(user__name__icontains=username)
+            | Q(full_name__icontains=username)
+            | Q(user__email__icontains=username)
+        )
+
+        if not users.exists():
+            return Response(
+                {"details": "No Users Found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.get_serializer(users, many=True)
+        return Response(serializer.data)

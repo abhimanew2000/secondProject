@@ -1,13 +1,11 @@
 from django.contrib import admin
-from accounts.models import User
+from accounts.models import User,Chats,Profile
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
 # Register your models here.
 class UserModelAdmin(BaseUserAdmin):
-    # The fields to be used in displaying the User model.
-    # These override the definitions on the base UserAdmin
-    # that reference specific fields on auth.User.
+   
     list_display = ["id", "email", "name", "tc", "is_admin"]
     list_filter = ["is_admin"]
     fieldsets = [
@@ -31,8 +29,21 @@ class UserModelAdmin(BaseUserAdmin):
     filter_horizontal = []
 
 
+class ChatsAdmin(admin.ModelAdmin):
+    list_editable=['is_read']
+
+    list_display=['sender','receiver','message','is_read']
 
 
 
-# Now register the new UserAdmin...
+
+class ProfileAdmin(admin.ModelAdmin):
+    list_display= ['user','full_name','verified']
+    search_fields = ['user__name','full_name']
+    list_filter = ['verified']  # Corrected list_filter
+
+
+
 admin.site.register(User, UserModelAdmin)
+admin.site.register(Chats,ChatsAdmin)
+admin.site.register(Profile,ProfileAdmin)

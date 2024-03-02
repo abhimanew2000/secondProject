@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.models import User
+from accounts.models import User,Chats,Profile
 from xml.dom import ValidationErr
 from django.utils.encoding import smart_str,force_bytes,DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode,urlsafe_base64_encode
@@ -44,8 +44,8 @@ class GoogleLoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ["id", "name", "email"]
+        model = Profile
+        fields = ["id","user","full_name" ,"image"]
 
 
 class UserChangePasswordSerializer(serializers.ModelSerializer):
@@ -75,9 +75,6 @@ class UserChangePasswordSerializer(serializers.ModelSerializer):
 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
-
-    # class Meta:
-    #     fields = ["email"]
 
     def validate(self, attrs):
         print('entered')
@@ -133,3 +130,11 @@ class UserPassworddResetSerializer(serializers.Serializer):
             PasswordResetTokenGenerator().check_token(user,token)
             raise ValidationError('Token is not valid or expired')
         
+
+class ChatsMessageSerializer(serializers.ModelSerializer):
+    receiver_profile = UserProfileSerializer(read_only = True)
+    sender_profile = UserProfileSerializer(read_only = True)
+     
+    class Meta:
+        model = Chats
+        fields=['id','user','sender_profile','sender','receiver_profile','receiver','message','is_read','date']

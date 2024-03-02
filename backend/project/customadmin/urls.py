@@ -16,7 +16,8 @@ from .views import (
     CancelBookingView,
     RoomTypeDeleteView,
     SingleHotelDetailView,
-    UpdateNotAvailableDates
+    UpdateNotAvailableDates,
+    AdminHotelBookingCreateView,
 )
 from . import views
 
@@ -44,12 +45,27 @@ urlpatterns = [
     path("rooms/<int:pk>/", RoomDetailView.as_view(), name="room-detail"),
     path("room-types/", RoomTypeListView.as_view(), name="room-type-list"),
     path("room-types/<int:pk>/", RoomTypeDetailView.as_view(), name="room-type-detail"),
-    path('about/<int:hotel_id>/', views.hotel_room_fetch, name="hotel-room-fetch"),
-    path('hotel-bookinglist/',HotelBookingListView.as_view(),name='hotel-bookinglist'),
-    path('cancel-booking/<int:pk>/',CancelBookingView.as_view(), name='cancel-booking'),
-    path('hotel/<int:hotel_id>/room-types/<int:id>/delete/', RoomTypeDeleteView.as_view(), name='delete-room-type'),
-    path('single-hotel-detail/<int:pk>/', SingleHotelDetailView.as_view(), name='single-hotel-detail'),
-    path('update-not-available-dates/<int:hotel_id>/', UpdateNotAvailableDates.as_view(), name='update_not_available_dates'),
-
-
+    path("about/<int:hotel_id>/", views.hotel_room_fetch, name="hotel-room-fetch"),
+    path(
+        "hotel-bookinglist/", HotelBookingListView.as_view(), name="hotel-bookinglist"
+    ),
+    path(
+        "cancel-booking/<int:pk>/", CancelBookingView.as_view(), name="cancel-booking"
+    ),
+    path(
+        "hotel/<int:hotel_id>/room-types/<int:id>/delete/",
+        RoomTypeDeleteView.as_view(),
+        name="delete-room-type",
+    ),
+    path(
+        "single-hotel-detail/<int:pk>/",
+        SingleHotelDetailView.as_view(),
+        name="single-hotel-detail",
+    ),
+    path(
+        "update-not-available-dates/<int:hotel_id>/<int:room_id>/",
+        UpdateNotAvailableDates.as_view(),
+        name="update_not_available_dates",
+    ),
+    path("bookings/", AdminHotelBookingCreateView.as_view(), name="create_booking"),
 ]

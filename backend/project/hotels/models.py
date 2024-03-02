@@ -18,8 +18,8 @@ class Hotel(models.Model):
     amenities = ArrayField(models.CharField(max_length=50), blank=True, default=list)
     ratings = models.DecimalField(max_digits=5, decimal_places=2, default=0.0,blank=True,null=True)
     price = models.IntegerField()  
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=30, decimal_places=20, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=30, decimal_places=20, blank=True, null=True)
 
 
     def calculate_average_rating(self):

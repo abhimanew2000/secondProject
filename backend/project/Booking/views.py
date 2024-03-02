@@ -16,7 +16,9 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import F, Value, BooleanField
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 
+from django.shortcuts import get_object_or_404
 
 
 
@@ -175,3 +177,27 @@ class UserCancelBookingView(generics.UpdateAPIView):
         instance.save()
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+
+@permission_classes([AllowAny])
+def get_hotel_details(request, booking_id):
+    booking = get_object_or_404(HotelBooking, pk=booking_id)
+    hotel = booking.hotel
+
+    # Serialize hotel data as needed
+    serialized_hotel = {
+        'name': hotel.name,
+        'description': hotel.description,
+        'city': hotel.city,
+        'address': hotel.address,
+        'image': str(hotel.image),  # Convert ImageField to string for URL
+        'availability': hotel.availability,
+        'amenities': hotel.amenities,
+        'ratings': str(hotel.ratings),  # Convert DecimalField to string
+        'price': hotel.price,
+        'latitude': str(hotel.latitude),  # Convert DecimalField to string
+        'longitude': str(hotel.longitude),  # Convert DecimalField to string
+    }
+
+    return JsonResponse({'hotel': serialized_hotel})

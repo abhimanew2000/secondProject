@@ -15,6 +15,7 @@ from hotels.models import Hotel
 from rest_framework.decorators import api_view, permission_classes
 from hotels.serializers import HotelSerializer,HotelsSerializer
 from rest_framework.generics import DestroyAPIView
+from datetime import datetime
 
 from rest_framework.generics import ListCreateAPIView
 import json
@@ -26,7 +27,6 @@ from hotels.serializers import RoomSerializer, RoomTypeSerializer
 from Booking.models import HotelBooking
 from Booking.serializers import HotelBookingSerializer
 from accounts.views import get_tokens_for_user
-# Create your views here.
 
 class AdminLoginView(APIView):
     permission_classes=[AllowAny]
@@ -55,7 +55,6 @@ class UserListView(ListAPIView):
 
     queryset = User.objects.all()
     serializer_class = UserSerializers
-    # permission_classes =[IsAuthenticated]
 
 
 @api_view(['PUT'])
@@ -110,11 +109,10 @@ class HotelUpdateView(RetrieveUpdateAPIView):
 
     queryset = Hotel.objects.all()
     serializer_class = HotelsSerializer
-    lookup_field = 'pk'  # Add this line
- 
+    lookup_field = 'pk'  
     def put(self, request,*args, **kwargs):
         try:
-            instance = self.get_object()  # Use the built-in get_object method
+            instance = self.get_object()  
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             self.update(request, *args, **kwargs)
@@ -127,7 +125,6 @@ from django.contrib.auth import logout
 
 class AdminLogoutView(APIView):
     def post(self, request, format=None):
-        # Check if the user is a superuser
         if request.user.is_authenticated and request.user.is_superuser:
             logout(request)
             return Response({"msg": "Admin Logout Success"}, status=status.HTTP_200_OK)
@@ -211,8 +208,7 @@ class RoomTypeDeleteView(DestroyAPIView):
     permission_classes=[IsAdminUser]
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
-    lookup_field = 'id'  # Specify the correct lookup field
-
+    lookup_field = 'id' 
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -235,22 +231,36 @@ class SingleHotelDetailView(generics.RetrieveAPIView):
         serializer = self.get_serializer(instance)
         return self.retrieve(request, *args, **kwargs)
     
+
 class UpdateNotAvailableDates(APIView):
-    permission_classes=[IsAdminUser]
-    def post(self, request, hotel_id):
-        print("HII")
+    permission_classes = [IsAdminUser]
+
+class UpdateNotAvailableDates(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, hotel_id, room_id):
         try:
-            # Get the selected dates from the request data
             selected_dates = request.data.get('dates', [])
 
-            # Retrieve the corresponding room types for the given hotel
-            room_types = RoomType.objects.filter(hotel_id=hotel_id)
+            formatted_dates = []
+            for date_str in selected_dates:
+                formatted_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
+                formatted_dates.append(formatted_date)
 
-            # Update the not available dates for each room type
-            for room_type in room_types:
-                room_type.dates.extend(selected_dates)
-                room_type.save()
+            room_type = get_object_or_404(RoomType, hotel_id=hotel_id, id=room_id)
+
+            room_type.dates = formatted_dates
+            room_type.save()
 
             return Response({'message': 'Selected dates updated successfully.'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminHotelBookingCreateView(generics.CreateAPIView):
+    permission_classes = [IsAdminUser]
+    queryset = HotelBooking.objects.all()
+    serializer_class = HotelBookingSerializer
+
+
+
