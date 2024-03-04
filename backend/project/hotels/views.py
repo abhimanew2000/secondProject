@@ -11,7 +11,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.views import View
 from rest_framework.views import APIView
-
 from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
@@ -219,5 +218,11 @@ class RoomTypeListByHotel(generics.ListAPIView):
 
     def get_queryset(self):
         hotel_id = self.kwargs.get("hotel_id")
-        roomtype = RoomType.objects.filter(hotel_id=hotel_id)
-        return roomtype
+        roomtypes = RoomType.objects.filter(hotel_id=hotel_id)
+        
+        # Iterate over each RoomType object to access its price_per_night attribute
+        for roomtype in roomtypes:
+            print(roomtype.price_per_night)
+            print(roomtype)
+        
+        return roomtypes

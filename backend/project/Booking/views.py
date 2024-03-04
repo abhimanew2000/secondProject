@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import F, Value, BooleanField
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
-
+from hotels.models import RoomType
 from django.shortcuts import get_object_or_404
 
 
@@ -96,8 +96,8 @@ def confirm_booking(request):
             hotel = Hotel.objects.get(id=hotel_id)
         except ObjectDoesNotExist:
             return JsonResponse({'status': 'failure', 'reason': 'Hotel not found'})
-        room_type=data.get('roomType', '')
-        print(room_type,'roomtype')
+        room_type_name=data.get('roomType', '')
+        print(room_type_name,'roomtype')
         total_price=data.get('totalPrice', '')
         print(total_price,'totalprice')
         check_in_date=data.get('checkInDate', '')
@@ -126,6 +126,13 @@ def confirm_booking(request):
                 'razorpay_signature': razorpay_signature
             }
             print(params_dict,'dict')
+
+            room_type = RoomType.objects.get(hotel=hotel,name=room_type_name)
+            if room_type.count>0:
+                room_type.count -=1
+                room_type.save()
+            else:
+                return JsonResponse({'status':'failure','reason':'No available rooms of this Type'})
             booking =HotelBooking.objects.create(
                     user=user,
                     hotel=hotel,

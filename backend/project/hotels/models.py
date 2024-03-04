@@ -45,6 +45,7 @@ class Room(models.Model):
     image = models.ImageField(upload_to='room_images/', null=True, blank=True)
     rooms = models.ManyToManyField('Room', related_name='hotels', blank=True)
 
+
     def __str__(self):
         return f"{self.hotel.name} - Room {self.room_number}"
 
@@ -55,6 +56,10 @@ class RoomType(models.Model):
     image = models.ImageField(upload_to='room_type_images/', null=True, blank=True)
     count = models.IntegerField()
     dates = ArrayField(models.DateField(), blank=True, null=True)
+    price_per_night = models.IntegerField(null=True, blank=True)
+
+
+    
 
 
 
