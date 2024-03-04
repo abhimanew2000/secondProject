@@ -41,31 +41,25 @@ class RoomTypeList(ListAPIView):
 class AutocompleteCityView(View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("query", "").strip()
-        print("Received Query:", repr(query))
 
         cities = Hotel.objects.filter(
             Q(city__iexact=query) | Q(city__icontains=query)
         ).values_list("city", flat=True)
 
-        print("Filtered Cities:", cities)
         return JsonResponse(list(cities), safe=False)
 
 
 @require_GET
 def get_hotels(request):
-    print("hiiii")
 
     city = request.GET.get("city")
     min_price = request.GET.get("min_price")
     max_price = request.GET.get("max_price")
-    print("city:", city)
-    print("min_price:", min_price)
-    print("max_price:", max_price)
+
     queryset = Hotel.objects.filter(city=city)
 
     if min_price is not None and max_price is not None:
         queryset = queryset.filter(price__gte=min_price, price__lte=max_price)
-        print(queryset, "qqqqqqq")
 
     serializer = HotelSerializer(queryset, many=True)
 
@@ -96,9 +90,7 @@ def get_hotel_images(request, hotel_id):
             if room_type.image
         ],
         "room_images": [
-            room.image.url.lstrip("/")  
-            for room in hotel.rooms.all()
-            if room.image
+            room.image.url.lstrip("/") for room in hotel.rooms.all() if room.image
         ],
     }
 
@@ -106,7 +98,6 @@ def get_hotel_images(request, hotel_id):
 
 
 class WishlistView(APIView):
-    print("entered")
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -121,7 +112,6 @@ class WishlistView(APIView):
         if request.user.is_authenticated:
             wishlist, created = Wishlist.objects.get_or_create(user=request.user)
             hotel_id = request.data.get("hotelId")
-            print("Received hotel_id:", hotel_id)
 
             if wishlist.hotels.filter(id=hotel_id).exists():
                 return Response(
@@ -132,7 +122,6 @@ class WishlistView(APIView):
             try:
                 wishlist.hotels.add(hotel_id)
                 serializer = WishlistSerializer(wishlist)
-                print(serializer, "SERIALIZER")
                 return Response(serializer.data, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -146,10 +135,8 @@ class WishlistView(APIView):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_to_wishlist(request):
-    print("enterred")
     try:
         hotel_id = int(request.data.get("hotel_id"))
-        print(hotel_id, "HOTELID")
         hotel = Hotel.objects.get(id=hotel_id)
 
         wishlist, created = Wishlist.objects.get_or_create(user=request.user)
@@ -219,10 +206,4 @@ class RoomTypeListByHotel(generics.ListAPIView):
     def get_queryset(self):
         hotel_id = self.kwargs.get("hotel_id")
         roomtypes = RoomType.objects.filter(hotel_id=hotel_id)
-        
-        # Iterate over each RoomType object to access its price_per_night attribute
-        for roomtype in roomtypes:
-            print(roomtype.price_per_night)
-            print(roomtype)
-        
         return roomtypes

@@ -42,7 +42,8 @@ def get_tokens_for_user(user):
 
 
 class UserRegistrationView(APIView):
-    permission_classes=[AllowAny]
+    permission_classes = [AllowAny]
+
     def post(self, request, format=None):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -75,7 +76,6 @@ def register_user_with_google(request):
             serializer.save()
             return Response({"msg": "Registration successful"})
         else:
-            print(serializer.errors)
             return Response(serializer.errors, status=400)
 
     return Response({"msg": "Invalid request data"}, status=400)
@@ -116,13 +116,10 @@ class UserLoginView(APIView):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def google_login(request):
-    print("enterrrred")
     try:
         google_data = request.data.get("google_oauth")
-        print(google_data, "doodle")
 
         user = User.objects.filter(email=google_data.get("email")).first()
-        print(user, "userrrrrrrr")
 
         if user:
             serializer = UserLoginSerializer(

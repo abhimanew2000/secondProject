@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from accounts.models import User,Chats,Profile
+from accounts.models import User, Chats, Profile
 from xml.dom import ValidationErr
-from django.utils.encoding import smart_str,force_bytes,DjangoUnicodeDecodeError
-from django.utils.http import urlsafe_base64_decode,urlsafe_base64_encode
+from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.exceptions import ValidationError
 from django.utils.html import escape
@@ -37,15 +37,15 @@ class UserLoginSerializer(serializers.ModelSerializer):
         model = User
         fields = ["email", "password"]
 
+
 class GoogleLoginSerializer(serializers.Serializer):
     id_token = serializers.CharField()
-
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ["id","user","full_name" ,"image"]
+        fields = ["id", "user", "full_name", "image"]
 
 
 class UserChangePasswordSerializer(serializers.ModelSerializer):
@@ -77,28 +77,28 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
 
     def validate(self, attrs):
-        print('entered')
-        email=attrs.get('email')
+        print("entered")
+        email = attrs.get("email")
         if User.objects.filter(email=email).exists():
-            user=User.objects.get(email=email)
-            uid=urlsafe_base64_encode(force_bytes(user.id))
-            print('uid is UID',uid)
-            token=PasswordResetTokenGenerator().make_token(user)
-            print('password reset token',token)
-            link = f'http://localhost:5173/reset-password/{uid}/{token}/'
+            user = User.objects.get(email=email)
+            uid = urlsafe_base64_encode(force_bytes(user.id))
+            print("uid is UID", uid)
+            token = PasswordResetTokenGenerator().make_token(user)
+            print("password reset token", token)
+            link = f"http://localhost:5173/reset-password/{uid}/{token}/"
             escaped_link = escape(link)
-            print('password Reset Link',link)
+            print("password Reset Link", link)
             body = f'Click the following link to reset your password: <a href="{link}">Reset Password</a>'
-            data={
-                'subject':'Reset Your Password',
-                'body':body,
-                'to_email':user.email,
+            data = {
+                "subject": "Reset Your Password",
+                "body": body,
+                "to_email": user.email,
             }
             Util.send_email(data)
 
             return attrs
         else:
-            raise ValidationErr('You are not a registered User')
+            raise ValidationErr("You are not a registered User")
 
 
 class UserPassworddResetSerializer(serializers.Serializer):
@@ -119,22 +119,32 @@ class UserPassworddResetSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "passwrd and confirm password doesnt match"
                 )
-            id=smart_str(urlsafe_base64_decode(uid))
-            user=User.objects.get(id=id)
-            if not PasswordResetTokenGenerator().check_token(user,token):
-                raise ValidationError('Token is not valid or expired')
+            id = smart_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(id=id)
+            if not PasswordResetTokenGenerator().check_token(user, token):
+                raise ValidationError("Token is not valid or expired")
             user.set_password(password)
             user.save()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
-            PasswordResetTokenGenerator().check_token(user,token)
-            raise ValidationError('Token is not valid or expired')
-        
+            PasswordResetTokenGenerator().check_token(user, token)
+            raise ValidationError("Token is not valid or expired")
+
 
 class ChatsMessageSerializer(serializers.ModelSerializer):
-    receiver_profile = UserProfileSerializer(read_only = True)
-    sender_profile = UserProfileSerializer(read_only = True)
-     
+    receiver_profile = UserProfileSerializer(read_only=True)
+    sender_profile = UserProfileSerializer(read_only=True)
+
     class Meta:
         model = Chats
-        fields=['id','user','sender_profile','sender','receiver_profile','receiver','message','is_read','date']
+        fields = [
+            "id",
+            "user",
+            "sender_profile",
+            "sender",
+            "receiver_profile",
+            "receiver",
+            "message",
+            "is_read",
+            "date",
+        ]
